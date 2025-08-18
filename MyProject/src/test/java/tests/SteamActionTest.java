@@ -1,40 +1,20 @@
 package tests;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
 import pages.ActionPage;
+import pages.BasePage;
 import pages.HomePage;
-import utils.DriverSingleton;
 
-public class SteamActionTest {
-
-
-    @BeforeAll
-    public static void setup() {
-
-        // Инициализируем драйвер
-        DriverSingleton.getDriver();
-    }
-
+public class SteamActionTest extends BasePage {
     @Test
     public void testCs2InPopularActionGames() {
-        HomePage home = new HomePage(DriverSingleton.getDriver());
+        HomePage home = new HomePage();
         home.open();
         home.scrollToActionButton();
-        home.goToActionCategory();
-
-        ActionPage action = new ActionPage(DriverSingleton.getDriver());
+        Assertions.assertTrue(home.goToActionCategory(), "Не удалось отобразить или кликнуть по табу 'Экшен'");
+        ActionPage action = new ActionPage();
         action.scrollToPopularSection();
-        action.assertCs2IsDisplayed();
-    }
-
-    @AfterAll
-    public static void tearDown() {
-        DriverSingleton.quitDriver();
+        Assertions.assertTrue(action.isCs2TileDisplayed(), "CS2 не отображается в разделе Popular");
     }
 }
-
