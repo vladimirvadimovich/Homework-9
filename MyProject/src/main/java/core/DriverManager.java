@@ -13,100 +13,82 @@ import org.openqa.selenium.opera.OperaOptions;
 
 import java.time.Duration;
 
-public class DriverManager {
-
-
-    private static final ThreadLocal<WebDriver> DRIVER = new ThreadLocal<>();
-
-    private DriverManager() { }
+public final class DriverManager {
+    private DriverManager() { /* запрет создания экземпляра */ }
 
     /**
-     * Инициализация драйвера с параметрами.
-     *
-     * @param browser  "chrome", "firefox", "edge", "opera"
-     * @param headless true если нужен безголовый режим
+     * Инициализация драйвера по умолчанию (из конфигурации).
      */
-    public static void initDriver(String browser, boolean headless) {
-
-        if (DRIVER.get() != null) {
-            return;
-        }
-
-        WebDriver driver;
-        switch (browser.toLowerCase()) {
-            case "chrome":
-                WebDriverManager.chromedriver().setup();
-                ChromeOptions chromeOptions = new ChromeOptions();
-                if (headless) {
-                    chromeOptions.addArguments("--headless=new");
-                }
-                chromeOptions.addArguments("--remote-allow-origins=*");
-                chromeOptions.addArguments("--start-maximized");
-                driver = new ChromeDriver(chromeOptions);
-                break;
-
-            case "firefox":
-                WebDriverManager.firefoxdriver().setup();
-                FirefoxOptions ffOptions = new FirefoxOptions();
-                if (headless) {
-                    ffOptions.addArguments("--headless");
-                }
-                driver = new FirefoxDriver(ffOptions);
-                driver.manage().window().maximize();
-                break;
-
-            case "edge":
-                WebDriverManager.edgedriver().setup();
-                EdgeOptions edgeOptions = new EdgeOptions();
-                if (headless) {
-                    edgeOptions.addArguments("--headless=new");
-                }
-                driver = new EdgeDriver(edgeOptions);
-                driver.manage().window().maximize();
-                break;
-
-            case "opera":
-                WebDriverManager.operadriver().setup();
-                OperaOptions operaOptions = new OperaOptions();
-                if (headless) {
-                    operaOptions.addArguments("--headless");
-                }
-                driver = new OperaDriver(operaOptions);
-                driver.manage().window().maximize();
-                break;
-
-            default:
-                throw new RuntimeException("Неизвестный браузер: " + browser);
-        }
-
-        // общие настройки
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
-
-        DRIVER.set(driver);
-    }
-
     public static void initDriver() {
         String browser = ConfigReader.get("browser");
         boolean headless = ConfigReader.getBoolean("headless");
         initDriver(browser, headless);
     }
 
+    /**
+     * Инициализация драйвера с явной передачей параметров.
+     */
+    public static void initDriver(String browser, boolean headless) {
+        WebDriverSingleton singleton = WebDriverSingleton.getInstance();
+        if (singleton.getDriver() != null) {
+            return; // уже инициализирован
+        }
 
+        WebDriver driver;
+        switch (browser.toLowerCase()) {
+            case "chrome":
+                WebDriverManager.chromedriver().setup();
+                ChromeOptions co = new ChromeOptions();
+                if (headless) co.addArguments("--headless=new");
+                co.addArguments("--remote-allow-origins=*", "--start-maximized");
+                driver = new ChromeDriver(co);
+                break;
+            case "firefox":
+                WebDriverManager.firefoxdriver().setup();
+                FirefoxOptions fo = new FirefoxOptions();
+                if (headless) fo.addArguments("--headless");
+                driver = new FirefoxDriver(fo);
+                driver.manage().window().maximize();
+                break;
+            case "edge":
+                WebDriverManager.edgedriver().setup();
+                EdgeOptions eo = new EdgeOptions();
+                if (headless) eo.addArguments("--headless=new");
+                driver = new EdgeDriver(eo);
+                driver.manage().window().maximize();
+                break;
+            case "opera":
+                WebDriverManager.operadriver().setup();
+                OperaOptions oo = new OperaOptions();
+                if (headless) oo.addArguments("--headless");
+                driver = new OperaDriver(oo);
+                driver.manage().window().maximize();
+                break;
+            default:
+                throw new RuntimeException("Неизвестный браузер: " + browser);
+        }
+
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
+        singleton.setDriver(driver);
+    }
+
+    /**
+     * Возвращает текущий WebDriver.
+     * Если ещё не инициализирован – инициализирует "по умолчанию".
+     */
     public static WebDriver getDriver() {
-        if (DRIVER.get() == null) {
+        WebDriverSingleton singleton = WebDriverSingleton.getInstance();
+        if (singleton.getDriver() == null) {
             initDriver();
         }
-        return DRIVER.get();
+        return singleton.getDriver();
     }
-
-
     public static void quitDriver() {
-        WebDriver driver = DRIVER.get();
+        WebDriverSingleton singleton = WebDriverSingleton.getInstance();
+        WebDriver driver = singleton.getDriver();
         if (driver != null) {
             driver.quit();
-            DRIVER.remove();
+            singleton.removeDriver();
         }
     }
-
-
 }

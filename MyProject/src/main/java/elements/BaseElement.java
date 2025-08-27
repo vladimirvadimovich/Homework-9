@@ -27,7 +27,7 @@ public abstract class BaseElement {
     public boolean isDisplayed() {
         try {
             return get().isDisplayed();
-        } catch (TimeoutException e) {
+        } catch (TimeoutException | NoSuchElementException e) {
             return false;
         }
     }
