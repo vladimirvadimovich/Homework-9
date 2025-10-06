@@ -3,34 +3,45 @@ package core;
 import org.openqa.selenium.WebDriver;
 
 public class WebDriverSingleton {
-    // ThreadLocal – чтобы в одном тестовом прогоне каждый поток держал свой WebDriver
+    // ThreadLocal – каждый поток получает свой WebDriver
     private final ThreadLocal<WebDriver> driverHolder = new ThreadLocal<>();
 
-    // volatile + двойная проверка блокировки для ленивой инициализации
-    private static volatile WebDriverSingleton instance;
+    // Единственный экземпляр синглтона
+    private static final WebDriverSingleton INSTANCE = new WebDriverSingleton();
 
     private WebDriverSingleton() {}
 
+    // Получить сам синглтон
     public static WebDriverSingleton getInstance() {
-        if (instance == null) {
-            synchronized (WebDriverSingleton.class) {
-                if (instance == null) {
-                    instance = new WebDriverSingleton();
-                }
-            }
+        return INSTANCE;
+    }
+
+    /**
+     * Получить WebDriver. Если он ещё не инициализирован в текущем потоке –
+     * читаем настройки и создаём его через фабрику.
+     */
+    public WebDriver getDriver() {
+        WebDriver driver = driverHolder.get();
+        if (driver == null) {
+            String browser = ConfigReader.get("browser");
+            boolean headless = ConfigReader.getBoolean("headless");
+            driver = DriverFactory.create(browser, headless);
+            driverHolder.set(driver);
         }
-        return instance;
+        return driver;
     }
 
-    WebDriver getDriver() {
-        return driverHolder.get();
-    }
-
+    // Позволяет вручную проставить драйвер (если надо)
     void setDriver(WebDriver driver) {
         driverHolder.set(driver);
     }
 
-    void removeDriver() {
-        driverHolder.remove();
+    // Удалить драйвер (например, в teardown)
+    public void removeDriver() {
+        WebDriver drv = driverHolder.get();
+        if (drv != null) {
+            drv.quit();
+            driverHolder.remove();
+        }
     }
 }

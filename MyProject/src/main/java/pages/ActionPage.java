@@ -13,11 +13,11 @@ public class ActionPage extends BasePage {
     private Label pageTitle = new Label(CONTENT_HUB_TITLE);
 
     private Button popularSectionHeader = new Button(
-            By.xpath("//div[@id='SaleSection_93094']")
+            By.xpath("//div[@id='SaleSection_13268']")
     );
 
     private Label cs2Tile = new Label(
-            By.xpath("//div[@id='SaleSection_93094']//img[@alt='Counter-Strike 2']")
+            By.xpath("//div[@id='SaleSection_13268']//img[@alt='Counter-Strike 2']")
     );
 
     public boolean isPageOpened() {
