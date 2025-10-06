@@ -1,6 +1,7 @@
 package core;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
+import org.jetbrains.annotations.NotNull;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -19,7 +20,7 @@ import java.time.Duration;
 public final class DriverFactory {
     private DriverFactory() {}
 
-    public static WebDriver create(String browser, boolean headless) {
+    public static @NotNull WebDriver create(@NotNull String browser, boolean headless) {
         WebDriver driver;
         switch (browser.toLowerCase()) {
             case "chrome":
